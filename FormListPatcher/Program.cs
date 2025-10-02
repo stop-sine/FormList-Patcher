@@ -5,6 +5,7 @@ using Noggog;
 using System.Net;
 using Mutagen.Bethesda.Fonts;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Plugins.Exceptions;
 
 namespace FormListPatcher
@@ -54,10 +55,12 @@ namespace FormListPatcher
             return false;
         }
 
-        private static bool FilterConflicts(List<IFormListGetter> formLists)
+        private static bool FilterConflicts(List<IModContext<IFormListGetter>> formLists)
         {
+            if (formLists.Count <= 2) return true;
+            if (formLists.Select(context => context.ModKey).All(BethesdaModKeys.Contains)) return true;
             foreach (var formList in formLists.GetRange(0, formLists.Count - 1))
-                if (!CompareFormLists(formList, formLists.Last())) return false;
+                if (!CompareFormLists(formList.Record, formLists.Last().Record)) return false;
             return true;
         }
 
@@ -72,7 +75,7 @@ namespace FormListPatcher
 
             foreach (var record in records)
             {
-                var overrides = record.FormKey.ToLinkGetter<IFormListGetter>().ResolveAll(cache).Reverse().ToList();
+                var overrides = record.FormKey.ToLinkGetter<IFormListGetter>().ResolveAllSimpleContexts(cache).Reverse().ToList();
                 if (FilterConflicts(overrides)) continue;
                 patchRecords.Add(record);
             }
@@ -87,7 +90,10 @@ namespace FormListPatcher
                 for (var i = overrides.IndexOf(formList!); i < overrides.Count; i++)
                 {
                     if (overrides[i].Record.Equals(flst)) continue;
-                    if (CompareFormLists(overrides[i].Record, flst)) continue;
+                    if (CompareFormLists(overrides[i].Record, flst))
+                    {
+
+                    }
                     overrides[i].Record.Items.Where(item => !flst.Items.Contains(item)).ForEach(flst.Items.Add);
                 }
                 if (flst.Equals(record)) continue;
