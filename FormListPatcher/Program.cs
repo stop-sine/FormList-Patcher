@@ -57,7 +57,7 @@ namespace FormListPatcher
 
         private static bool FilterConflicts(List<IModContext<IFormListGetter>> formLists)
         {
-            //if (formLists.Count <= 2) return true;
+            if (formLists.Count <= 2) return true;
             if (formLists.Select(context => context.ModKey).All(BethesdaModKeys.Contains)) return true;
             foreach (var formList in formLists.GetRange(0, formLists.Count - 1))
                 if (!CompareFormLists(formList.Record, formLists.Last().Record)) return false;
