@@ -13,29 +13,30 @@ namespace FormListPatcher
     {
 
         private static readonly List<ModKey> BethesdaModKeys = [
-            new ModKey("Skyrim.esm", ModType.Master),
-            new ModKey("Update.esm", ModType.Master),
-            new ModKey("HearthFires.esm", ModType.Master),
-            new ModKey("Dragonborn.esm", ModType.Master),
-            new ModKey("ccasvsse001-almsivi.esm", ModType.Master),
-            new ModKey("ccBGSSSE001-Fish.esm", ModType.Master),
-            new ModKey("ccqdrsse001-survivalmode.esl ", ModType.Light),
-            new ModKey("ccqdrsse002-firewood.esl", ModType.Light),
-            new ModKey("ccbgssse018-shadowrend.esl", ModType.Light),
-            new ModKey("ccedhsse001-norjewel.esl", ModType.Light),
-            new ModKey("ccvsvsse002-pets.esl", ModType.Light),
-            new ModKey("cceejsse003-hollow.esl", ModType.Light),
-            new ModKey("ccbgssse016-umbra.esm", ModType.Master),
-            new ModKey("ccbgssse040-advobgobs.esl", ModType.Light),
-            new ModKey("ccedhsse002-splkntset.esl", ModType.Light),
-            new ModKey("ccbgssse067-daedinv.esm ", ModType.Master),
-            new ModKey("ccvsvsse003-necroarts.esl", ModType.Light),
-            new ModKey("ccvsvsse004-beafarmer.esl", ModType.Light),
-            new ModKey("ccbgssse025-advdsgs.esm", ModType.Master),
-            new ModKey("ccrmssse001-necrohouse.esl", ModType.Light),
-            new ModKey(" cceejsse004-hall.esl", ModType.Light),
-            new ModKey("cceejsse005-cave.esm", ModType.Master),
-            new ModKey("cckrtsse001_altar.esl", ModType.Light),
+            new ModKey("Skyrim", ModType.Master),
+            new ModKey("Update", ModType.Master),
+            new ModKey("Dawnguard", ModType.Master),
+            new ModKey("HearthFires", ModType.Master),
+            new ModKey("Dragonborn", ModType.Master),
+            new ModKey("ccasvsse001-almsivi", ModType.Master),
+            new ModKey("ccBGSSSE001-Fish", ModType.Master),
+            new ModKey("ccqdrsse001-survivalmode", ModType.Light),
+            new ModKey("ccqdrsse002-firewood", ModType.Light),
+            new ModKey("ccbgssse018-shadowrend", ModType.Light),
+            new ModKey("ccedhsse001-norjewel", ModType.Light),
+            new ModKey("ccvsvsse002-pets", ModType.Light),
+            new ModKey("cceejsse003-hollow", ModType.Light),
+            new ModKey("ccbgssse016-umbra", ModType.Master),
+            new ModKey("ccbgssse040-advobgobs", ModType.Light),
+            new ModKey("ccedhsse002-splkntset", ModType.Light),
+            new ModKey("ccbgssse067-daedinv", ModType.Master),
+            new ModKey("ccvsvsse003-necroarts", ModType.Light),
+            new ModKey("ccvsvsse004-beafarmer", ModType.Light),
+            new ModKey("ccbgssse025-advdsgs", ModType.Master),
+            new ModKey("ccrmssse001-necrohouse", ModType.Light),
+            new ModKey(" cceejsse004-hall", ModType.Light),
+            new ModKey("cceejsse005-cave", ModType.Master),
+            new ModKey("cckrtsse001_altar", ModType.Light),
         ];
 
 
@@ -81,28 +82,17 @@ namespace FormListPatcher
             foreach (var record in patchRecords)
             {
                 var overrides = record.FormKey.ToLinkGetter<IFormListGetter>().ResolveAllSimpleContexts(cache).Reverse().ToList();
-                //var modKeys = overrides.Select(flst => flst.Record.FormKey.ModKey).ToList();
-                var formList = overrides.FindLast(context => BethesdaModKeys.Contains(context.ModKey));
-                if (formList is null) continue;
-                var flst = formList.Record.DeepCopy();
-                for (var i = overrides.IndexOf(formList); i < overrides.Count; i++)
+                var formList = overrides.FindLast(context => BethesdaModKeys.Contains(context.ModKey)) ?? overrides.First();
+                var flst = formList!.Record.DeepCopy();
+                for (var i = overrides.IndexOf(formList!); i < overrides.Count; i++)
                 {
                     if (overrides[i].Record.Equals(flst)) continue;
                     if (CompareFormLists(overrides[i].Record, flst)) continue;
-
-                    for (var j = 0; j < overrides[i].Record.Items.Count; j++)
-                    {
-                        if (!flst.Items.Contains(overrides[i].Record.Items[j]))
-                            if (j > 0 && flst.Items.Contains(overrides[i].Record.Items[j - 1]))
-                                flst.Items.Insert(formList.Record.Items.IndexOf(overrides[i].Record.Items[j - 1]) + 1, overrides[i].Record.Items[j]);
-                            else
-                                flst.Items.Add(overrides[i].Record.Items[j]);
-                    }
+                    overrides[i].Record.Items.Where(item => !flst.Items.Contains(item)).ForEach(flst.Items.Add);
                 }
-
+                if (flst.Equals(record)) continue;
                 patch.FormLists.Add(flst);
             }
-
         }
     }
 }
